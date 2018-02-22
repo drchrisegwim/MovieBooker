@@ -1,0 +1,151 @@
+﻿
+@{
+    ViewBag.Title = "New Rental Form";
+}
+
+<h2>New Rental Form</h2>
+
+<form id="newRental">
+    <div class="form-group">
+        <label>Customer</label>
+        <div class="tt-container">
+            <input id="customer" required type="text" value="" class="form-control" />
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-4 col-sm-4">
+            <ul id="customers" class="list-group"></ul>
+        </div>
+    </div>
+
+    <div class="formgroup">
+        <label>Movie</label>
+        <div class="tt-container">
+            <input id="movie" type="text" value="" class="form-control" />
+        </div>
+    </div>
+    @*<ul id="movies" class="list-group"></ul>*@
+    <p></p>
+    <button class="btn btn-primary"> Submit </button>
+
+</form>
+
+@section scripts
+{
+    @Scripts.Render("~/bundles/jqueryval")
+
+    <script>
+        $(document).ready(function () {
+
+            var vm = {
+                customerIds: []
+            };
+
+            var customers = new Bloodhound({
+                datumTokenizer: Bloodhound.tokenizers.obj.whitespace('name'),
+                queryTokenizer: Bloodhound.tokenizers.whitespace,
+                remote: {
+                    url: '/api/customers?query=%QUERY',
+                    wildcard: '%QUERY'
+                }
+            });
+
+            $('#customer').typeahead({
+                minLength: 3,
+                highlight:true
+
+            },
+
+                {
+                    name: 'customers',
+                    display: 'name',
+                    source: customers
+                }).on("typeahead:select", function (e, customer) {
+                    
+                    // vm.customerId = customer.id;
+                    $("#customers").append("<li class='list-group-item'>" + customer.name + "</li>");
+
+                    $("#customer").typeahead("val", "");
+
+                    vm.customerIds.push(customer.id);
+
+                });
+
+
+
+            //Implementing Posting of this form
+
+            // First call the validate method like this below
+            $("#newRental").validate({
+                submitHandler: function () {
+
+                    e.preventDefault();   //This line prevents the form from submiting normally as html
+
+                    //Now using jquery AJAX
+
+                    $.ajax({
+                        url: "/api/newRentals",
+                        method: "post",
+                        data: vm
+                    })
+
+                    .done(function () {
+
+                        toastr.success("Rentals successfully recorded.");
+                        //console.log("done");
+                    })
+                    .fail(function () {
+                        toastr.error("Something unexpected happend.");
+
+                    });
+
+
+                }
+
+            });
+
+            //$("#newRental").submit(function (e) {
+               
+            //});
+
+        });
+       
+    </script>
+
+    <script>
+
+        $(document).ready(function () {
+
+            // Same Implementation but now for Movie
+
+            var vm = {};
+
+            var movies = new Bloodhound({
+                datumTokenizer: Bloodhound.tokenizers.obj.whitespace('name'),
+                queryTokenizer: Bloodhound.tokenizers.whitespace,
+                remote: {
+                    url: '/api/movies?query=%QUERY',
+                    wildcard: '%QUERY'
+                }
+            });
+
+            $('#movie').typeahead({
+                minLength: 3,
+                highlight: true
+
+            },
+
+                {
+                    name: 'movies',
+                    display: 'name',
+                    source: movies
+                }).on("typeahead:select", function (e, movie) {
+
+                   vm.movieId = movie.id;
+
+                });
+
+        });
+    </script>
+}
